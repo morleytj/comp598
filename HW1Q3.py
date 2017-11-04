@@ -1,5 +1,6 @@
 import sys, re
 import collections
+import math
 # ============================================ Student info methods================================================
 def get_student_name():
 	# @TO_STUDENT: Write your name here
@@ -96,7 +97,7 @@ def get_answer_Q3_1(subopt_result):
 	#result = [ [0, 1, 0.10], [0, 2, 0.15], [0, 3, 0.16] ]
         # Define a counter to track the results and update it as we go
         # The counter maps (i,j) base pairs to the frequency of that pair
-        freqs = Counter()
+        freqs = collections.Counter()
         for struct in subopt_result:
             # To count the base pairs in each structure
             # First create a stack, and each time a ( is encountered, add its index to the stack
@@ -117,14 +118,39 @@ def get_answer_Q3_1(subopt_result):
 	validate_Q3_1_output_format(result)
 	return result
 
+def parse_freqs(frequency_dict, results, tuple_val):
+    for bpair in results:
+        key = (bpair[0], bpair[1]) 
+        if key in frequency_dict:
+            #This is the second pass, and the tuple exists with one unspecified value
+            frequency_dict[key][tuple_val] = bpair[2]
+        elif tuple_val == 1:
+            frequency_dict[key] = (None, bpair[2])
+        else:
+            frequency_dict[key] = (bpair[2], None)
+
 def get_answer_Q3_2(q3_1_result, dot_ps_result):
 	'''
 	This method should be implemented by student.
 	Compare output from RNAfold and result of question3_1 for the same sequence and return an error (see text assignment)
 	result_error is expected to be numeric
 	'''
+        # Reminder: Probability stored in dot.ps needs to be squared, since it is in the form of:
+        # i j sqrt(p) ubox
 	result_error = 0
 	# @TO_STUDENT: Write your code here (trust me, answer is not 0 :-) )
+        # Since the q3_1_result is not necessarily ordered identically to dot_ps_result,
+        # I will construct a dictionary mapping from base pair to a tuple in the form of (dotpsProb, q3_1Prob)
+        # That way I can fill it out easily with one pass over each list
+        frequency_collector = dict()
+        parse_freqs(frequency_collector, dot_ps_result, 0)
+        parse_freqs(frequency_collector, q3_1_result, 1)
+
+        for vals in frequency_collector.itervalues():
+            pRNAfold = pow(vals[0], 2)
+            freq = vals[1]
+            result_error += pow(pRNAfold - freq, 2)
+        result_error = math.sqrt(result_error)
 
 	return result_error
 
@@ -134,8 +160,8 @@ def get_answer_Q3_2(q3_1_result, dot_ps_result):
 
 print("This is a solution of %s, student_id is %s" % (get_student_name(), get_student_id()) )
 
-subopt_result_filepath = "path/to/file/subopt_result_filepath.txt"
-dot_ps_filepath = "path/to/file/dot.ps"
+subopt_result_filepath = "subopt_result.txt" #"path/to/file/subopt_result_filepath.txt"
+dot_ps_filepath = "dot.ps" #"path/to/file/dot.ps"
 
 # parsing RNAsubopt result file
 subopt_result = parse_subopt_result_file(subopt_result_filepath)
