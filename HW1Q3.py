@@ -65,8 +65,10 @@ def parse_dot_ps_file(filepath):
 				continue
 			elif is_data and line.startswith('showpage'):
 				break
-			elif is_data:
+			elif is_data and line.endswith("ubox"):
 				# take only first 3 numbers
+                                # I made a change here to ignore the lbox probabilities, as they
+                                # were disrupting the data collection
 				data_line = line.split()[:3]
 				dot_ps_result.append(
 					[int(data_line[0]), int(data_line[1]), float(data_line[2])]
@@ -113,7 +115,8 @@ def get_answer_Q3_1(subopt_result):
         for val in freqs.itervalues():
             totalPairs += val
         result = [[x[0], x[1], float(freqs[x])/float(totalPairs)] for x in freqs.iterkeys()]
-	# @TO_STUDENT: output should be [ [i1, j1, freq_i1_j1 ], [i2, j2, freq_i2_j2 ], ...  ]
+	
+        # @TO_STUDENT: output should be [ [i1, j1, freq_i1_j1 ], [i2, j2, freq_i2_j2 ], ...  ]
 	# use validate_Q3_output_format(result) to validate the output
 	validate_Q3_1_output_format(result)
 	return result
@@ -123,7 +126,10 @@ def parse_freqs(frequency_dict, results, access_val):
         key = (bpair[0], bpair[1]) 
         if key in frequency_dict:
             #This is the second pass, and the tuple exists with one unspecified value
+            print("updating! "+str(access_val))
+            print(frequency_dict[key])
             frequency_dict[key][access_val] = bpair[2]
+            print(frequency_dict[key])
         elif access_val == 1:
             frequency_dict[key] = [0, bpair[2]]
         else:
@@ -146,6 +152,8 @@ def get_answer_Q3_2(q3_1_result, dot_ps_result):
         
         parse_freqs(frequency_collector, dot_ps_result, 0)
         parse_freqs(frequency_collector, q3_1_result, 1)
+
+        #print(frequency_collector.items())
 
         for vals in frequency_collector.itervalues():
             pRNAfold = pow(vals[0], 2)
@@ -177,6 +185,6 @@ dot_ps_result = parse_dot_ps_file(dot_ps_filepath)
 q3_2_result = get_answer_Q3_2(q3_1_result, dot_ps_result)
 
 print("The result to q3_1 is:")
-print(q3_1_result)
+#print(q3_1_result)
 
 print("The result to q3_2 is: %f" % (q3_2_result))
