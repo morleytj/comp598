@@ -16,6 +16,8 @@
 ##For each generation, write this data to an output file
 import random
 import sys
+import numpy as np
+import math
 sys.path.append("/usr/local/lib/python2.7/site-packages")
 import RNA
 
@@ -42,7 +44,7 @@ def allStructMFE(pop):
     mapping = dict()
     for seq in pop:
         mapping[seq] = RNA.fold(seq)[0]
-    return True
+    return mapping
 
 #Returns a numerical value indicating the fitness of the MFE struct mfe, in regards to the target structure
 #Uses the base pair distance in RNAdistance
@@ -54,20 +56,31 @@ def plot(fitness_dict, generation, out):
     return True
 
 #Defines reproduction rate as a function of base pair distance
-def R(d):
-    #
+def R(d, Z, L):
+    return math.pow(math.e, float(2)/float(L)*d)/float(Z)
 
 #Returns a new population list, where each sequence is replicated with the fitness in the dict
 #Additionaly, each nucleotide has a mutation rate of mut_rate
 #Essentially the workflow is as follows:
 #For N times, we select a sequence with probabilities defined by R
 ##This sequence is replicated with error rate mut_rate, and the result is added to the new population
-def replicate(fitness_dict, mut_rate, N):
-    #Sample with replacement from the sequences, N times, with weights equal to the reproductive fitness
+def replicate(fitness_dict, mut_rate, N, L):
+    #Sample with replacement from the sequences, N times, with probabilites equal to the reproductive fitness
     ##As defined by R
-    newPop = random.choices(fitness_dict.keys(), weights=[R(x) for x in fitness_dict.itervalues()], k=N)
-    for i in range(N):
-        #
+    Z = 0
+    newPop = []
+    for seq in fitness_dict.iterkeys():
+        Z += math.pow(math.e, (float(2)/float(L))*fitness_dict[seq])
+    newPop = np.random.choice(fitness_dict.keys(), N, replace=True, p=[R(x, Z, L) for x in fitness_dict.itervalues()])
+    #Next, we need to mutate the chosen structures
+    #To do so, it's easiest to first convert the strings into lists
+    newPop = [x.split() for x in newPop]
+    for i in range(len(newPop)):
+        for j in range(len(newPop[i])):
+            if random.random() <= mut_rate:
+                #Mutate this nucleotide
+                newPop[i][j]=randomNucleotide()
+    newPop = [''.join(x) for x in newPop]
     return newPop
 
 def reactor(T, L, N, G, M, output_file):
@@ -80,5 +93,22 @@ def reactor(T, L, N, G, M, output_file):
         #fitnesses is a dict mapping from an seq to the fitness of its mfe structure
         #In relation to the target structure provided
         plot(fitnesses, i, output_file)
-        population = replicate(fitnesses, M, N)
-    
+        population = replicate(fitnesses, M, N, L)
+
+def maina(t, l, n, g, m, out):
+    print("Starting reactor...")
+    reactor(t, l, n, g, m, out)
+
+def main():
+    print("Starting reactor...")
+    T="(((((((....))))..)))"
+    reactor(T, len(T), 100, 500, 0.02, "test.txt")
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        name, T, L, N, G, M, out = sys.argv
+        maina(T, L, N, G, M, out)
+    else:
+        main()
+
+#todo: Implement plotting
