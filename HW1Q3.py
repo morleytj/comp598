@@ -112,22 +112,22 @@ def get_answer_Q3_1(subopt_result):
         totalPairs = 0
         for val in freqs.itervalues():
             totalPairs += val
-        result = [[x[0], x[1], freqs[x]/totalPairs] for x in freqs.iterkeys()]
+        result = [[x[0], x[1], float(freqs[x])/float(totalPairs)] for x in freqs.iterkeys()]
 	# @TO_STUDENT: output should be [ [i1, j1, freq_i1_j1 ], [i2, j2, freq_i2_j2 ], ...  ]
 	# use validate_Q3_output_format(result) to validate the output
 	validate_Q3_1_output_format(result)
 	return result
 
-def parse_freqs(frequency_dict, results, tuple_val):
+def parse_freqs(frequency_dict, results, access_val):
     for bpair in results:
         key = (bpair[0], bpair[1]) 
         if key in frequency_dict:
             #This is the second pass, and the tuple exists with one unspecified value
-            frequency_dict[key][tuple_val] = bpair[2]
-        elif tuple_val == 1:
-            frequency_dict[key] = (None, bpair[2])
+            frequency_dict[key][access_val] = bpair[2]
+        elif access_val == 1:
+            frequency_dict[key] = [0, bpair[2]]
         else:
-            frequency_dict[key] = (bpair[2], None)
+            frequency_dict[key] = [bpair[2], 0]
 
 def get_answer_Q3_2(q3_1_result, dot_ps_result):
 	'''
@@ -140,9 +140,10 @@ def get_answer_Q3_2(q3_1_result, dot_ps_result):
 	result_error = 0
 	# @TO_STUDENT: Write your code here (trust me, answer is not 0 :-) )
         # Since the q3_1_result is not necessarily ordered identically to dot_ps_result,
-        # I will construct a dictionary mapping from base pair to a tuple in the form of (dotpsProb, q3_1Prob)
+        # I will construct a dictionary mapping from base pair to a list in the form of [dotpsProb, q3_1Prob]
         # That way I can fill it out easily with one pass over each list
         frequency_collector = dict()
+        
         parse_freqs(frequency_collector, dot_ps_result, 0)
         parse_freqs(frequency_collector, q3_1_result, 1)
 
@@ -160,7 +161,7 @@ def get_answer_Q3_2(q3_1_result, dot_ps_result):
 
 print("This is a solution of %s, student_id is %s" % (get_student_name(), get_student_id()) )
 
-subopt_result_filepath = "subopt_result.txt" #"path/to/file/subopt_result_filepath.txt"
+subopt_result_filepath = "subopt_results.txt" #"path/to/file/subopt_result_filepath.txt"
 dot_ps_filepath = "dot.ps" #"path/to/file/dot.ps"
 
 # parsing RNAsubopt result file
@@ -174,3 +175,8 @@ dot_ps_result = parse_dot_ps_file(dot_ps_filepath)
 
 # solving question Q3_2
 q3_2_result = get_answer_Q3_2(q3_1_result, dot_ps_result)
+
+print("The result to q3_1 is:")
+print(q3_1_result)
+
+print("The result to q3_2 is: %f" % (q3_2_result))
