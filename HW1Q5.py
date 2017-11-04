@@ -53,6 +53,10 @@ def calcFitness(mfe, target_struct):
 
 #Writes the average distance of the population to the target structure, tagged at this generation, to out
 def plot(fitness_dict, generation, out):
+    f = open(out, 'a')
+    avg_fitness= sum(fitness_dict.values())/float(len(fitness_dict.values()))
+    f.write(str(avg_fitness)+" "+str(generation)+"\n")
+    f.close()
     return True
 
 #Defines reproduction rate as a function of base pair distance
@@ -86,12 +90,11 @@ def replicate(fitness_dict, mut_rate, N, L):
 def reactor(T, L, N, G, M, output_file):
     population = initializePopulation(L, N)
     for i in range(G):
-        MFEs = allStructMFE(population) #Should return a dictionary mapping a seq to its mfe
+        MFEs = allStructMFE(population)
         fitnesses = dict()
         for seq in population:
             fitnesses[seq] = calcFitness(MFEs[seq], T)
         #fitnesses is a dict mapping from an seq to the fitness of its mfe structure
-        #In relation to the target structure provided
         plot(fitnesses, i, output_file)
         population = replicate(fitnesses, M, N, L)
 
@@ -102,7 +105,7 @@ def maina(t, l, n, g, m, out):
 def main():
     print("Starting reactor...")
     T="(((((((....))))..)))"
-    reactor(T, len(T), 100, 500, 0.02, "test.txt")
+    reactor(T, len(T), 100, 5000, 0.1, "test.txt")
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
@@ -110,5 +113,3 @@ if __name__ == "__main__":
         maina(T, L, N, G, M, out)
     else:
         main()
-
-#todo: Implement plotting
