@@ -65,7 +65,7 @@ def parse_dot_ps_file(filepath):
 				continue
 			elif is_data and line.startswith('showpage'):
 				break
-			elif is_data and line.endswith("ubox"):
+			elif is_data and line.endswith("ubox\n"):
 				# take only first 3 numbers
                                 # I made a change here to ignore the lbox probabilities, as they
                                 # were disrupting the data collection
@@ -114,7 +114,10 @@ def get_answer_Q3_1(subopt_result):
         totalPairs = 0
         for val in freqs.itervalues():
             totalPairs += val
-        result = [[x[0], x[1], float(freqs[x])/float(totalPairs)] for x in freqs.iterkeys()]
+        result = [[x[0], x[1], float(freqs[x])/totalPairs] for x in freqs.iterkeys()]
+        #Question: For the frequency of a base pair, is it the frequency of that pair in the set of all pairs?
+        ##Or is it the (number of times that base pair exists)/(number of sequences)
+        ##Well, when changed to the alternate way, the error rate skyrockets to a crazy number, so I guess not...
 	
         # @TO_STUDENT: output should be [ [i1, j1, freq_i1_j1 ], [i2, j2, freq_i2_j2 ], ...  ]
 	# use validate_Q3_output_format(result) to validate the output
@@ -126,10 +129,7 @@ def parse_freqs(frequency_dict, results, access_val):
         key = (bpair[0], bpair[1]) 
         if key in frequency_dict:
             #This is the second pass, and the tuple exists with one unspecified value
-            print("updating! "+str(access_val))
-            print(frequency_dict[key])
             frequency_dict[key][access_val] = bpair[2]
-            print(frequency_dict[key])
         elif access_val == 1:
             frequency_dict[key] = [0, bpair[2]]
         else:
@@ -153,12 +153,17 @@ def get_answer_Q3_2(q3_1_result, dot_ps_result):
         parse_freqs(frequency_collector, dot_ps_result, 0)
         parse_freqs(frequency_collector, q3_1_result, 1)
 
+        #print(str(len(q3_1_result)))
+
         #print(frequency_collector.items())
 
         for vals in frequency_collector.itervalues():
-            pRNAfold = pow(vals[0], 2)
-            freq = vals[1]
-            result_error += pow(pRNAfold - freq, 2)
+            if 0 in vals:
+                pass
+            else:
+                pRNAfold = pow(vals[0], 2)
+                freq = vals[1]
+                result_error += pow(pRNAfold - freq, 2)
         result_error = math.sqrt(result_error)
 
 	return result_error
@@ -169,8 +174,8 @@ def get_answer_Q3_2(q3_1_result, dot_ps_result):
 
 print("This is a solution of %s, student_id is %s" % (get_student_name(), get_student_id()) )
 
-subopt_result_filepath = "subopt_results.txt" #"path/to/file/subopt_result_filepath.txt"
-dot_ps_filepath = "dot.ps" #"path/to/file/dot.ps"
+subopt_result_filepath = sys.argv[2]#"subopt_results.txt" #"path/to/file/subopt_result_filepath.txt"
+dot_ps_filepath = sys.argv[1] #"path/to/file/dot.ps"
 
 # parsing RNAsubopt result file
 subopt_result = parse_subopt_result_file(subopt_result_filepath)

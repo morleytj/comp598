@@ -61,29 +61,34 @@ def plot(fitness_dict, generation, out):
 
 #Defines reproduction rate as a function of base pair distance
 def R(d, Z, L):
-    return math.pow(math.e, float(2)/float(L)*d)/float(Z)
+    return math.pow(math.e, (-1)*(float(2)/float(L))*d)/float(Z)
 
 #Returns a new population list, where each sequence is replicated with the fitness in the dict
 #Additionaly, each nucleotide has a mutation rate of mut_rate
 #Essentially the workflow is as follows:
 #For N times, we select a sequence with probabilities defined by R
 ##This sequence is replicated with error rate mut_rate, and the result is added to the new population
-def replicate(fitness_dict, mut_rate, N, L):
+def replicate(fitness_dict, mut_rate, N, L, T):
     #Sample with replacement from the sequences, N times, with probabilites equal to the reproductive fitness
     ##As defined by R
     Z = 0
     newPop = []
     for seq in fitness_dict.iterkeys():
-        Z += math.pow(math.e, (float(2)/float(L))*fitness_dict[seq])
+        Z += math.pow(math.e, (-1)*(float(2)/float(L))*fitness_dict[seq])
+    newarr=[]
+    for k in fitness_dict.iterkeys():
+        newarr.append(R(fitness_dict[k],Z,L))
     newPop = np.random.choice(fitness_dict.keys(), N, replace=True, p=[R(x, Z, L) for x in fitness_dict.itervalues()])
     #Next, we need to mutate the chosen structures
     #To do so, it's easiest to first convert the strings into lists
-    newPop = [x.split() for x in newPop]
+    newPop = [list(x) for x in newPop]
     for i in range(len(newPop)):
         for j in range(len(newPop[i])):
             if random.random() <= mut_rate:
                 #Mutate this nucleotide
-                newPop[i][j]=randomNucleotide()
+                arr = ['G','U','A','C']
+                arr.remove(newPop[i][j])
+                newPop[i][j]=random.choice(arr)
     newPop = [''.join(x) for x in newPop]
     return newPop
 
@@ -96,7 +101,7 @@ def reactor(T, L, N, G, M, output_file):
             fitnesses[seq] = calcFitness(MFEs[seq], T)
         #fitnesses is a dict mapping from an seq to the fitness of its mfe structure
         plot(fitnesses, i, output_file)
-        population = replicate(fitnesses, M, N, L)
+        population = replicate(fitnesses, M, N, L, T)
 
 def maina(t, l, n, g, m, out):
     print("Starting reactor...")
@@ -104,8 +109,14 @@ def maina(t, l, n, g, m, out):
 
 def main():
     print("Starting reactor...")
-    T="(((((((....))))..)))"
-    reactor(T, len(T), 100, 5000, 0.1, "test.txt")
+    #T="(((....)))(((....)))"
+    #reactor(T, len(T), 100, 500, 0.02, "test.txt")
+    mus=[0.01,0.02,0.05,0.1]
+    Ts=["(((((((....))))..)))","((..((((...))..)))).","(((....)))(((....)))"]
+    for i in range(len(Ts)):
+        for mu in mus:
+            reactor(Ts[i], len(Ts[i]), 100, 500, mu, "res"+"m"+str(mu)+"t"+str(i)+".txt")
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
